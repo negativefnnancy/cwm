@@ -174,6 +174,7 @@ kbfunc_client_move_mb(void *ctx, struct cargs *cargs)
 	screen_prop_win_draw(sc, "%+5d%+5d", cc->geom.x, cc->geom.y);
 	while (move) {
 		XMaskEvent(X_Dpy, MOUSEMASK, &ev);
+again:
 		switch (ev.type) {
 		case MotionNotify:
 #ifdef MOTION_MAX_FPS
@@ -195,9 +196,16 @@ kbfunc_client_move_mb(void *ctx, struct cargs *cargs)
 			cc->geom.y += client_snapcalc(cc->geom.y,
 			    cc->geom.y + cc->geom.h + (cc->bwidth * 2),
 			    area.y, area.y + area.h, sc->snapdist);
+
+			/* only live update if we are caught up */
+			if (XCheckMaskEvent(X_Dpy, MOUSEMASK, &ev)) {
+				goto again;
+			}
+
 			client_move(cc);
 			screen_prop_win_draw(sc,
 			    "%+5d%+5d", cc->geom.x, cc->geom.y);
+			XSync(X_Dpy, False);
 			break;
 		case ButtonRelease:
 			move = 0;
@@ -265,6 +273,7 @@ kbfunc_client_resize_mb(void *ctx, struct cargs *cargs)
 	screen_prop_win_draw(sc, "%4d x %-4d", cc->dim.w, cc->dim.h);
 	while (resize) {
 		XMaskEvent(X_Dpy, MOUSEMASK, &ev);
+again:
 		switch (ev.type) {
 		case MotionNotify:
 #ifdef MOTION_MAX_FPS
@@ -277,9 +286,16 @@ kbfunc_client_resize_mb(void *ctx, struct cargs *cargs)
 			cc->geom.w = ev.xmotion.x;
 			cc->geom.h = ev.xmotion.y;
 			client_apply_sizehints(cc);
+
+			/* only live update if we are caught up */
+			if (XCheckMaskEvent(X_Dpy, MOUSEMASK, &ev)) {
+				goto again;
+			}
+
 			client_resize(cc, 1);
 			screen_prop_win_draw(sc,
 			    "%4d x %-4d", cc->dim.w, cc->dim.h);
+			XSync(X_Dpy, False);
 			break;
 		case ButtonRelease:
 			resize = 0;
