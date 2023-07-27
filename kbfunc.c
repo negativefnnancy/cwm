@@ -176,9 +176,11 @@ kbfunc_client_move_mb(void *ctx, struct cargs *cargs)
 		XMaskEvent(X_Dpy, MOUSEMASK, &ev);
 		switch (ev.type) {
 		case MotionNotify:
-			/* not more than 60 times / second */
-			if ((ev.xmotion.time - ltime) <= (1000 / 60))
+#ifdef MOTION_MAX_FPS
+			/* not more than MOTION_MAX_FPS times / second */
+			if ((ev.xmotion.time - ltime) <= (1000 / MOTION_MAX_FPS))
 				continue;
+#endif
 			ltime = ev.xmotion.time;
 
 			cc->geom.x = ev.xmotion.x_root - cc->ptr.x - cc->bwidth;
